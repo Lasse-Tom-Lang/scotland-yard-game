@@ -16,6 +16,7 @@ ctx.scale(dpi, dpi);
 
 ctx.font = "20px sans-serif";
 ctx.lineWidth = 2;
+ctx.strokeStyle = "red";
 
 let tileset = []
 
@@ -40,6 +41,7 @@ tilesetDimensions = new Vector2(18, 10)
 tilemap = []
 let tileSize = 64
 tilesetOffset = new Vector2(50, 50)
+selectedSquare = new Vector2(0, 0)
 
 
 setTimeout(() => {
@@ -54,8 +56,25 @@ setTimeout(() => {
   }
 }, 200)
 
-addEventListener("mousemove", (event) => { 
-  console.log(event.clientX, event.clientY)
+// addEventListener("mousemove", (event) => { 
+//   console.log(event.clientX, event.clientY)
+// })
+
+addEventListener("click", (event) => {
+  newX = Math.floor((event.clientX-tilesetOffset.x)/tileSize)
+  newY = Math.floor((event.clientY-tilesetOffset.y)/tileSize)
+  if (newX<0 || newX>=tilesetDimensions.x) {
+    newX = null
+  }
+  if (newY<0 || newY>=tilesetDimensions.y) {
+    newY = null
+  }
+  ctx.drawImage(tileset[tilemap[selectedSquare.y][selectedSquare.x]], tileSize*selectedSquare.x+tilesetOffset.x, tileSize*selectedSquare.y+tilesetOffset.y, tileSize, tileSize)
+  selectedSquare.x = newX
+  selectedSquare.y = newY
+  if (newX != null && newY != null) {
+    ctx.strokeRect(tilesetOffset.x + newX*tileSize + 1, tilesetOffset.y + newY*tileSize + 1, tileSize - 2, tileSize - 2);
+  }
 })
 
 // ctx.moveTo(0, 0);
