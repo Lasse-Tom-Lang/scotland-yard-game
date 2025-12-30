@@ -24,6 +24,14 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
+function generateAgents(numberOfAgents) {
+  let agentsGenerated = []
+  for (let i = 0; i < numberOfAgents; i++) {
+    agentsGenerated.push(new Vector2(getRandomInt(tilesetDimensions.x), getRandomInt(tilesetDimensions.y)))
+  }
+  return agentsGenerated
+}
+
 function loadTileset() {
   let tileset = []
 
@@ -73,7 +81,8 @@ let tileSize = 64
 tilesetDimensions = new Vector2(18, 10)
 tilesetOffset = new Vector2(50, 50)
 selectedSquare = new Vector2(0, 0)
-
+let ownAgentCount = 3
+let agentPositions = generateAgents(ownAgentCount)
 
 setTimeout(() => {
   for (y=0;y<tilesetDimensions.y;y++) {
@@ -86,20 +95,24 @@ setTimeout(() => {
     }
     tilemap.push(xList)
   }
+  for (let i = 0; i < agentPositions.length; i++) {
+    tilemap[agentPositions[i].y][agentPositions[i].x].select("yellow")
+  }
 }, 200)
-
-// addEventListener("mousemove", (event) => { 
-//   console.log(event.clientX, event.clientY)
-// })
 
 addEventListener("click", (event) => {
   let newTilePosition = findSelectedTile(event)
   if (selectedSquare.x != null && selectedSquare.y != null) {
     tilemap[selectedSquare.y][selectedSquare.x].draw()
   }
+  agentPositions.forEach(agent => {
+    if (agent.x == selectedSquare.x && agent.y == selectedSquare.y) {
+      tilemap[selectedSquare.y][selectedSquare.x].select("yellow")
+    }
+    if (agent.x == newTilePosition.x && agent.y == newTilePosition.y) { // Agent gets selected
+      tilemap[newTilePosition.y][newTilePosition.x].select("red")
+    }
+  })
   selectedSquare.x = newTilePosition.x
   selectedSquare.y = newTilePosition.y
-  if (selectedSquare.x != null && selectedSquare.y != null) {
-    tilemap[selectedSquare.y][selectedSquare.x].select("red")
-  }
 })
