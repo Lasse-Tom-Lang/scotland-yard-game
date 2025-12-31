@@ -27,7 +27,7 @@ function getRandomInt(max) {
 function generateAgents(numberOfAgents) {
   let agentsGenerated = []
   for (let i = 0; i < numberOfAgents; i++) {
-    agentsGenerated.push(new Vector2(getRandomInt(tilesetDimensions.x), getRandomInt(tilesetDimensions.y)))
+    agentsGenerated.push(new Agent(new Vector2(getRandomInt(tilesetDimensions.x), getRandomInt(tilesetDimensions.y))))
   }
   return agentsGenerated
 }
@@ -55,6 +55,24 @@ function findSelectedTile(event) {
   return new Vector2(newX, newY)
 }
 
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}
+
+function findPossibleMoves(currentPosition) {
+  fields = [
+    new Vector2(mod(currentPosition.x - 1, tilesetDimensions.x), mod(currentPosition.y - 1, tilesetDimensions.y)),  // Top-left
+    new Vector2(mod(currentPosition.x, tilesetDimensions.x), mod(currentPosition.y - 1, tilesetDimensions.y)),      // Top-center
+    new Vector2(mod(currentPosition.x + 1, tilesetDimensions.x), mod(currentPosition.y - 1, tilesetDimensions.y)),  // Top-right
+    new Vector2(mod(currentPosition.x - 1, tilesetDimensions.x), mod(currentPosition.y, tilesetDimensions.y)),      // Middle-left
+    new Vector2(mod(currentPosition.x + 1, tilesetDimensions.x), mod(currentPosition.y, tilesetDimensions.y)),      // Middle-right
+    new Vector2(mod(currentPosition.x - 1, tilesetDimensions.x), mod(currentPosition.y + 1, tilesetDimensions.y)),  // Bottom-left
+    new Vector2(mod(currentPosition.x, tilesetDimensions.x), mod(currentPosition.y + 1, tilesetDimensions.y)),      // Bottom-center
+    new Vector2(mod(currentPosition.x + 1, tilesetDimensions.x), mod(currentPosition.y + 1, tilesetDimensions.y)),  // Bottom-right
+  ]
+  return fields
+}
+
 class Vector2 {
   constructor(x, y) {
     this.x = x
@@ -71,8 +89,24 @@ class Tile {
     ctx.drawImage(tileset[this.tileMapIndex], tileSize*this.position.x+tilesetOffset.x, tileSize*this.position.y+tilesetOffset.y, tileSize, tileSize)
   }
   select(color) {
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
     ctx.strokeRect(this.position.x*tileSize + tilesetOffset.x + 1,this.position.y*tileSize + tilesetOffset.y + 1, tileSize - 2, tileSize - 2);
+    ctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5)`
+    ctx.fillRect(this.position.x*tileSize + tilesetOffset.x + 1,this.position.y*tileSize + tilesetOffset.y + 1, tileSize - 2, tileSize - 2);
+  }
+}
+
+class Agent {
+  constructor(position) {
+    this.position = position
+    this.hasMoved = false
+  }
+  move(newPosition) {
+    this.position = newPosition
+    this.hasMoved = true
+  }
+  nextTurn() {
+    this.hasMoved = false
   }
 }
 
@@ -82,7 +116,8 @@ tilesetDimensions = new Vector2(18, 10)
 tilesetOffset = new Vector2(50, 50)
 selectedSquare = new Vector2(0, 0)
 let ownAgentCount = 3
-let agentPositions = generateAgents(ownAgentCount)
+let agents = generateAgents(ownAgentCount)
+let agentSelected = false
 
 setTimeout(() => {
   for (y=0;y<tilesetDimensions.y;y++) {
@@ -95,8 +130,8 @@ setTimeout(() => {
     }
     tilemap.push(xList)
   }
-  for (let i = 0; i < agentPositions.length; i++) {
-    tilemap[agentPositions[i].y][agentPositions[i].x].select("yellow")
+  for (let i = 0; i < agents.length; i++) {
+    tilemap[agents[i].position.y][agents[i].position.x].select([255, 255, 0])
   }
 }, 200)
 
@@ -105,12 +140,19 @@ addEventListener("click", (event) => {
   if (selectedSquare.x != null && selectedSquare.y != null) {
     tilemap[selectedSquare.y][selectedSquare.x].draw()
   }
-  agentPositions.forEach(agent => {
-    if (agent.x == selectedSquare.x && agent.y == selectedSquare.y) {
-      tilemap[selectedSquare.y][selectedSquare.x].select("yellow")
+  agents.forEach(agent => {
+    if (agent.position.x == selectedSquare.x && agent.position.y == selectedSquare.y) {
+      tilemap[selectedSquare.y][selectedSquare.x].draw()
+      tilemap[selectedSquare.y][selectedSquare.x].select([255, 255, 0])
     }
-    if (agent.x == newTilePosition.x && agent.y == newTilePosition.y) { // Agent gets selected
-      tilemap[newTilePosition.y][newTilePosition.x].select("red")
+    if (agent.position.x == newTilePosition.x && agent.position.y == newTilePosition.y) { // Agent gets selected
+    tilemap[newTilePosition.y][newTilePosition.x].draw()
+      tilemap[newTilePosition.y][newTilePosition.x].select([255, 0, 0])
+      let possiblePositions = findPossibleMoves(newTilePosition)
+      console.log(possiblePositions)
+      possiblePositions.forEach(position => {
+        tilemap[position.y][position.x].select([255, 165, 0])
+      })
     }
   })
   selectedSquare.x = newTilePosition.x
