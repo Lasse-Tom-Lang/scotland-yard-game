@@ -73,6 +73,30 @@ function findPossibleMoves(currentPosition) {
   return fields
 }
 
+function drawGameBoard() {
+  for (y=0;y<tilesetDimensions.y;y++) {
+    xList = []
+    for (x=0;x<tilesetDimensions.x;x++) {
+      tilemap[y][x].draw()
+    }
+  }
+  for (let i = 0; i < agents.length; i++) {
+    if (agents[i].hasMoved) { // Agent has moved
+      tilemap[agents[i].position.y][agents[i].position.x].select([0, 255, 0])
+      continue
+    }
+    if (agentSelected == i) { // Agent is selected
+      tilemap[agents[i].position.y][agents[i].position.x].select([255, 0, 0])
+      let possiblePositions = findPossibleMoves(agents[i].position)
+      possiblePositions.forEach(position => {
+        tilemap[position.y][position.x].select([255, 165, 0])
+      })
+      continue
+    }
+    tilemap[agents[i].position.y][agents[i].position.x].select([255, 255, 0]) // Agent hasn't moved and isn't selected
+  }
+}
+
 class Vector2 {
   constructor(x, y) {
     this.x = x
@@ -117,7 +141,7 @@ tilesetOffset = new Vector2(50, 50)
 selectedSquare = new Vector2(0, 0)
 let ownAgentCount = 3
 let agents = generateAgents(ownAgentCount)
-let agentSelected = false
+let agentSelected = null
 
 setTimeout(() => {
   for (y=0;y<tilesetDimensions.y;y++) {
@@ -137,24 +161,26 @@ setTimeout(() => {
 
 addEventListener("click", (event) => {
   let newTilePosition = findSelectedTile(event)
-  if (selectedSquare.x != null && selectedSquare.y != null) {
-    tilemap[selectedSquare.y][selectedSquare.x].draw()
+
+  if (agentSelected != null) { // Checks if an agent gets moved
+    let possiblePositions = findPossibleMoves(selectedSquare)
+    possiblePositions.forEach(position => {
+      if (position.x != newTilePosition.x || position.y != newTilePosition.y) {
+        return
+      }
+      agents[agentSelected].move(newTilePosition)
+    })
+    agentSelected = null
   }
-  agents.forEach(agent => {
-    if (agent.position.x == selectedSquare.x && agent.position.y == selectedSquare.y) {
-      tilemap[selectedSquare.y][selectedSquare.x].draw()
-      tilemap[selectedSquare.y][selectedSquare.x].select([255, 255, 0])
+
+  for (let i = 0; i < agents.length; i++) { // Checks if an agent got selected
+    if (agents[i].position.x == newTilePosition.x && agents[i].position.y == newTilePosition.y && !agents[i].hasMoved) {
+      agentSelected = i
+      break
     }
-    if (agent.position.x == newTilePosition.x && agent.position.y == newTilePosition.y) { // Agent gets selected
-    tilemap[newTilePosition.y][newTilePosition.x].draw()
-      tilemap[newTilePosition.y][newTilePosition.x].select([255, 0, 0])
-      let possiblePositions = findPossibleMoves(newTilePosition)
-      console.log(possiblePositions)
-      possiblePositions.forEach(position => {
-        tilemap[position.y][position.x].select([255, 165, 0])
-      })
-    }
-  })
+  }
+  
+  drawGameBoard()
   selectedSquare.x = newTilePosition.x
   selectedSquare.y = newTilePosition.y
 })
