@@ -1,24 +1,18 @@
 const socket = io("/");
-
 const canvas = document.getElementById("canvas");
-
 const width = window.innerWidth;
 const height = window.innerHeight;
+const dpi = window.devicePixelRatio;
+const ctx = canvas.getContext("2d");
 
 canvas.width = width*2;
 canvas.height = height*2;
 canvas.style.width = width+"px";
 canvas.style.height = height+"px";
-const dpi = window.devicePixelRatio;
-
-const ctx = canvas.getContext("2d");
 ctx.scale(dpi, dpi);
 
 ctx.font = "20px sans-serif";
 ctx.lineWidth = 2;
-ctx.strokeStyle = "red";
-
-let tileset = loadTileset()
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -44,8 +38,8 @@ function loadTileset() {
 }
 
 function findSelectedTile(event) {
-  newX = Math.floor((event.clientX-tilesetOffset.x)/tileSize)
-  newY = Math.floor((event.clientY-tilesetOffset.y)/tileSize)
+  let newX = Math.floor((event.clientX-tilesetOffset.x)/tileSize)
+  let newY = Math.floor((event.clientY-tilesetOffset.y)/tileSize)
   if (newX<0 || newX>=tilesetDimensions.x) {
     newX = null
   }
@@ -75,7 +69,6 @@ function findPossibleMoves(currentPosition) {
 
 function drawGameBoard() {
   for (y=0;y<tilesetDimensions.y;y++) {
-    xList = []
     for (x=0;x<tilesetDimensions.x;x++) {
       tilemap[y][x].draw()
     }
@@ -134,14 +127,55 @@ class Agent {
   }
 }
 
-tilemap = []
+class ButtonManager {
+  constructor() {
+    this.buttons = []
+  }
+  newButton(text, position, dimensions, backgroundColor, textColor, onClick) {
+    let newButton = new Button(text, position, dimensions, backgroundColor, textColor, onClick)
+    this.buttons.push(newButton)
+    return newButton
+  }
+  checkClicks(clickPosition) {
+    for(let i = 0; i<this.buttons.length; i++) {
+      if (this.buttons[i].position.x <= clickPosition.x && this.buttons[i].position.y <= clickPosition.y && this.buttons[i].position.x + this.buttons[i].dimensions.x >= clickPosition.x && this.buttons[i].position.y + this.buttons[i].dimensions.y >= clickPosition.y) {
+        this.buttons[i].onClick()
+      }
+    }
+  }
+}
+
+class Button {
+  constructor(text, position, dimensions, backgroundColor, textColor, onClick) {
+    this.text = text
+    this.position = position
+    this.dimensions = dimensions
+    this.backgroundColor = backgroundColor
+    this.textColor = textColor
+    this.onClick = onClick
+    this.draw()
+  }
+  draw() {
+    ctx.fillStyle = this.backgroundColor
+    ctx.fillRect(this.position.x, this.position.y, this.dimensions.x, this.dimensions.y);
+    ctx.fillStyle = this.textColor;
+    ctx.fillText(this.text, this.position.x, this.position.y + (this.dimensions.y/2+5));
+  }
+}
+
+let buttonManager = new ButtonManager()
+// buttonManager.newButton("Hello Button", new Vector2(5, 5), new Vector2(150, 40), "red", "white", NaN)
+
+let tileset = loadTileset()
+let tilemap = []
 let tileSize = 64
-tilesetDimensions = new Vector2(18, 10)
-tilesetOffset = new Vector2(50, 50)
-selectedSquare = new Vector2(0, 0)
+let tilesetDimensions = new Vector2(18, 10)
+let tilesetOffset = new Vector2(50, 50)
+let selectedSquare = new Vector2(0, 0)
 let ownAgentCount = 3
 let agents = generateAgents(ownAgentCount)
 let agentSelected = null
+let currentTurn = 0
 
 setTimeout(() => {
   for (y=0;y<tilesetDimensions.y;y++) {
@@ -162,6 +196,8 @@ setTimeout(() => {
 addEventListener("click", (event) => {
   let newTilePosition = findSelectedTile(event)
 
+  buttonManager.checkClicks(new Vector2(event.clientX, event.clientY))
+
   if (agentSelected != null) { // Checks if an agent gets moved
     let possiblePositions = findPossibleMoves(selectedSquare)
     possiblePositions.forEach(position => {
@@ -179,7 +215,7 @@ addEventListener("click", (event) => {
       break
     }
   }
-  
+
   drawGameBoard()
   selectedSquare.x = newTilePosition.x
   selectedSquare.y = newTilePosition.y
