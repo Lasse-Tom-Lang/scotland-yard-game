@@ -12,7 +12,7 @@ canvas.style.height = height+"px";
 ctx.scale(dpi, dpi);
 
 ctx.font = "20px sans-serif";
-ctx.lineWidth = 2;
+ctx.lineWidth = 0;
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -90,6 +90,13 @@ function drawGameBoard() {
   }
 }
 
+function nextTurn() {
+  currentTurn += 1
+  agents.forEach(agent => {
+    agent.nextTurn()
+  })
+}
+
 class Vector2 {
   constructor(x, y) {
     this.x = x
@@ -131,8 +138,8 @@ class ButtonManager {
   constructor() {
     this.buttons = []
   }
-  newButton(text, position, dimensions, backgroundColor, textColor, onClick) {
-    let newButton = new Button(text, position, dimensions, backgroundColor, textColor, onClick)
+  newButton(text, position, dimensions, backgroundColor, textColor, borderRadius, onClick) {
+    let newButton = new Button(text, position, dimensions, backgroundColor, textColor, borderRadius, onClick)
     this.buttons.push(newButton)
     return newButton
   }
@@ -146,25 +153,48 @@ class ButtonManager {
 }
 
 class Button {
-  constructor(text, position, dimensions, backgroundColor, textColor, onClick) {
+  constructor(text, position, dimensions, backgroundColor, textColor, borderRadius, onClick) {
     this.text = text
     this.position = position
     this.dimensions = dimensions
     this.backgroundColor = backgroundColor
     this.textColor = textColor
+    this.borderRadius = borderRadius
     this.onClick = onClick
     this.draw()
   }
+
   draw() {
     ctx.fillStyle = this.backgroundColor
-    ctx.fillRect(this.position.x, this.position.y, this.dimensions.x, this.dimensions.y);
+    ctx.strokeStyle = this.backgroundColor
+
+    ctx.beginPath();
+    ctx.arc(this.position.x + this.borderRadius, this.position.y + this.borderRadius, this.borderRadius-1, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(this.position.x + this.dimensions.x - this.borderRadius, this.position.y + this.borderRadius, this.borderRadius-1, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(this.position.x + this.borderRadius, this.position.y + this.dimensions.y - this.borderRadius, this.borderRadius-1, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(this.position.x + this.dimensions.x - this.borderRadius, this.position.y + this.dimensions.y - this.borderRadius, this.borderRadius-1, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillRect(this.position.x + this.borderRadius, this.position.y, this.dimensions.x - 2*this.borderRadius, this.dimensions.y);
+    ctx.fillRect(this.position.x, this.position.y + this.borderRadius, this.dimensions.x, this.dimensions.y - 2*this.borderRadius);
+
+
     ctx.fillStyle = this.textColor;
-    ctx.fillText(this.text, this.position.x, this.position.y + (this.dimensions.y/2+5));
+    ctx.fillText(this.text, this.position.x+5, this.position.y + (this.dimensions.y/2+5));
   }
 }
 
 let buttonManager = new ButtonManager()
-// buttonManager.newButton("Hello Button", new Vector2(5, 5), new Vector2(150, 40), "red", "white", NaN)
+buttonManager.newButton("Next turn", new Vector2(5, 5), new Vector2(100, 40), "red", "white", 20, nextTurn)
 
 let tileset = loadTileset()
 let tilemap = []
