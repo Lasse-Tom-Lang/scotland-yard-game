@@ -95,6 +95,15 @@ function nextTurn() {
   agents.forEach(agent => {
     agent.nextTurn()
   })
+  let possibleNewPosisiton = findPossibleMoves(antagonistPosition)
+  antagonistPosition = possibleNewPosisiton[Math.floor(Math.random()*possibleNewPosisiton.length)]
+  ctx.drawImage(tileset[tilemap[antagonistPosition.y][antagonistPosition.x].tileMapIndex], tileSize*currentTurn+previousTurnsOffset.x, previousTurnsOffset.y, tileSize, tileSize)
+}
+
+function tryToArrest() {
+  if (agentSelected != null && agents[agentSelected].position.x == antagonistPosition.x && agents[agentSelected].position.y == antagonistPosition.y) {
+    alert("You Won!")
+  }
 }
 
 class Vector2 {
@@ -194,18 +203,21 @@ class Button {
 }
 
 let buttonManager = new ButtonManager()
-buttonManager.newButton("Next turn", new Vector2(5, 5), new Vector2(100, 40), "red", "white", 20, nextTurn)
+buttonManager.newButton("Next turn", new Vector2(15, 15), new Vector2(100, 40), "green", "white", 20, nextTurn)
+buttonManager.newButton("Arrest", new Vector2(130, 15), new Vector2(70, 40), "red", "white", 20, tryToArrest)
 
 let tileset = loadTileset()
 let tilemap = []
 let tileSize = 64
 let tilesetDimensions = new Vector2(18, 10)
-let tilesetOffset = new Vector2(50, 50)
+let tilesetOffset = new Vector2(70, 70)
 let selectedSquare = new Vector2(0, 0)
 let ownAgentCount = 3
 let agents = generateAgents(ownAgentCount)
 let agentSelected = null
 let currentTurn = 0
+let previousTurnsOffset = new Vector2(70, tilesetOffset.y + tilesetDimensions.y*tileSize + 15)
+let antagonistPosition = new Vector2(getRandomInt(tilesetDimensions.x), getRandomInt(tilesetDimensions.y))
 
 setTimeout(() => {
   for (y=0;y<tilesetDimensions.y;y++) {
@@ -221,6 +233,7 @@ setTimeout(() => {
   for (let i = 0; i < agents.length; i++) {
     tilemap[agents[i].position.y][agents[i].position.x].select([255, 255, 0])
   }
+  ctx.drawImage(tileset[tilemap[antagonistPosition.y][antagonistPosition.x].tileMapIndex], tileSize*currentTurn+previousTurnsOffset.x, previousTurnsOffset.y, tileSize, tileSize)
 }, 200)
 
 addEventListener("click", (event) => {
